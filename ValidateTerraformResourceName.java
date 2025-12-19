@@ -33,3 +33,9 @@ public boolean isValidTerraformResourceName(String productName) {
     }
     return productName.matches("^[A-Za-z_][A-Za-z0-9_-]*$");
 }
+
+
+
+public static final String TERRAFORM_NAME_ERROR =
+    "Invalid Terraform resource name. " +
+    "It must start with a letter or underscore and may contain only letters, digits, underscores (_), and dashes (-).";
