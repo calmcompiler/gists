@@ -3,39 +3,22 @@
  *
  * <p>According to HashiCorp Terraform naming conventions:
  * <ul>
- *   <li>Allowed characters: letters (<code>A-Z</code>, <code>a-z</code>), digits (<code>0-9</code>),
- *       underscores (<code>_</code>), and dashes (<code>-</code>).</li>
- *   <li>First character: must be a letter (<code>A-Z</code> or <code>a-z</code>) or underscore (<code>_</code>).</li>
- *   <li>Spaces and special characters (e.g., <code>@</code>, <code>.</code>, <code>:</code>, <code>?</code>) are not permitted.</li>
+ *   <li>Allowed characters: letters (A-Z, a-z), digits (0-9),
+ *       spaces, underscores (_), and dashes (-).</li>
+ *   <li>First character: must be a letter (A-Z or a-z) or underscore (_).</li>
+ *   <li>Special characters (e.g., @, ., :, ?, /) are not permitted.</li>
  * </ul>
  *
  * <p>The regex used is:
  * <pre>
- * ^[A-Za-z_][A-Za-z0-9_-]*$
+ * ^[A-Za-z_][A-Za-z0-9 _-]*$
  * </pre>
  *
- * <p>Examples:
- * <ul>
- *   <li><code>my_resource</code> → valid</li>
- *   <li><code>MyResource</code> → valid</li>
- *   <li><code>resource-123</code> → valid</li>
- *   <li><code>_Resource</code> → valid</li>
- *   <li><code>123resource</code> → invalid (starts with digit)</li>
- *   <li><code>res@name</code> → invalid (special character not allowed)</li>
- * </ul>
- *
  * @param productName the resource name to validate
- * @return {@code true} if the name is valid according to Terraform conventions, {@code false} otherwise
  */
-public boolean isValidTerraformResourceName(String productName) {
-    if (productName == null) {
-        return false;
+public void validateTerraformResourceName(String productName) {
+    boolean isValidTFResourceName = StringUtils.isNotBlank(productName) && productName.matches("^[A-Za-z_][A-Za-z0-9 _-]*$);
+    if(!isValidTFResourceName) {
+        throw new CatalogException("Invalid terraform resource name: must start with a letter or underscore and may contain only letters, digits, spaces, underscores (_), and dashes (-). [productName=" + productName + "]");
     }
-    return productName.matches("^[A-Za-z_][A-Za-z0-9_-]*$");
 }
-
-
-
-public static final String TERRAFORM_NAME_ERROR =
-    "Invalid Terraform resource name. " +
-    "It must start with a letter or underscore and may contain only letters, digits, underscores (_), and dashes (-).";
