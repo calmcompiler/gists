@@ -107,21 +107,23 @@ private void addDataFromCPRolesRecordToUserReportRecord(
             if (!alreadyExists && !isDcpUser) {
                 List<String> newRecordValues = createNewRecord(cpUserRoleRecord, revalUserHeaderRecord, userNameArray);
 
-                // Construct directly instead of re-parsing CSV string
-                Map<String, String> newUserMap = new HashMap<>();
-                int i = 0;
-                for (String header : revalUserHeaderRecord.toMap().keySet()) {
-                    newUserMap.put(header, newRecordValues.get(i++));
-                }
+                // Instead of building a CSV string and reparsing, join values directly
+                String joinedLine = String.join(",", newRecordValues);
 
-                CSVRecord newUserRecord = new CSVRecord(null, newUserMap, null, i);
-                revalUserReportRecords.add(newUserRecord);
-                existingNames.add(nameKey);
+                try (CSVParser parser = CSVParser.parse(joinedLine,
+                        CSVFormat.DEFAULT.withHeader(revalUserHeaderRecord.toMap().keySet().toArray(new String[0])))) {
+                    CSVRecord newUserRecord = parser.getRecords().get(0);
+                    revalUserReportRecords.add(newUserRecord);
+                    existingNames.add(nameKey);
+                } catch (IOException e) {
+                    logger.error("Error creating new CSVRecord: {}", e.getMessage());
+                }
             }
         }
         counter.incrementAndGet();
     }
 }
+
 
 
 //////////////////////
