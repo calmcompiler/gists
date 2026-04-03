@@ -67,6 +67,52 @@ private List<CSVRecord> getRevalCPUsers(List<String> revalResponseList) {
     }
 }
 
+//---
+private void addDataFromCPRolesRecordToUserReportRecord(
+        List<CSVRecord> cpUserRecords,
+        List<CSVRecord> revalCpUserRolesRecords,
+        List<CSVRecord> revalUserReportRecords,
+        CSVRecord revalUserHeaderRecord) {
+
+    Map<String, CSVRecord> cpUserRoleMap = revalCpUserRolesRecords.stream()
+            .collect(Collectors.toMap(r -> r.get("User"), r -> r, (r1, r2) -> r1));
+
+    Set<String> existingNames = revalUserReportRecords.stream()
+            .map(r -> r.get(RevalServiceConstants.FIRSTNAME) + "|" + r.get(RevalServiceConstants.LASTNAME))
+            .collect(Collectors.toSet());
+
+    // Use index-based loop instead of AtomicInteger
+    for (int i = 1; i < cpUserRecords.size(); i++) { // skip first record
+        CSVRecord record = cpUserRecords.get(i);
+        String userId = record.get("User");
+        CSVRecord cpUserRoleRecord = cpUserRoleMap.get(userId);
+        if (cpUserRoleRecord == null) continue;
+
+        String[] userNameArray = cpUserRoleRecord.get(RevalServiceConstants.USERNAME1).split("-");
+        String nameKey = userNameArray[0] + "|" + userNameArray[1];
+
+        boolean alreadyExists = existingNames.contains(nameKey);
+        boolean isDcpUser = RevalServiceConstants.getDCPUserMap().containsValue(userId);
+
+        if (!alreadyExists && !isDcpUser) {
+            List<String> newRecordValues = createNewRecord(cpUserRoleRecord, revalUserHeaderRecord, userNameArray);
+
+            // Build one CSV line
+            String joinedLine = String.join(",", newRecordValues);
+
+            try (CSVParser parser = CSVParser.parse(joinedLine,
+                    CSVFormat.DEFAULT.withHeader(revalUserHeaderRecord.toMap().keySet().toArray(new String[0])))) {
+                CSVRecord newUserRecord = parser.getRecords().get(0);
+                revalUserReportRecords.add(newUserRecord);
+                existingNames.add(nameKey);
+            } catch (IOException e) {
+                logger.error("Error creating new CSVRecord: {}", e.getMessage());
+            }
+        }
+    }
+}
+
+
 
 
 
